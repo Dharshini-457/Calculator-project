@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Function Plotter 📈</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        input, select, button { margin: 10px 0; padding: 8px; width: 100%; }
+        #plot { width: 100%; height: 500px; }
+    </style>
+</head>
+<body>
+
+<h1>Function Plotter 📈</h1>
+
+<label for="functionInput">Enter a function of x:</label>
+<textarea id="functionInput" rows="3" placeholder="Example: sin(x) + x^2"></textarea>
+
+<label for="choice">What do you want to plot?</label>
+<select id="choice">
+    <option value="original">Original Function</option>
+    <option value="derivative">Derivative</option>
+    <option value="integral">Integral</option>
+</select>
+
+<button onclick="plotFunction()">Plot</button>
+
+<div id="plot"></div>
+
+<script>
+function plotFunction() {
+    const exprInput = document.getElementById('functionInput').value;
+    const choice = document.getElementById('choice').value;
+
+    if (!exprInput) {
+        alert('Please enter a function!');
+        return;
+    }
+
+    let expr = exprInput;
+    let label = `f(x) = ${exprInput}`;
+
+    try {
+        const x = math.parse('x');
+
+        if (choice === 'derivative') {
+            expr = math.derivative(exprInput, 'x').toString();
+            label = `f'(x) = ${expr}`;
+        } else if (choice === 'integral') {
+            expr = `integrate(${exprInput}, x)`;
+            label = `∫f(x)dx`;
+        }
+
+        const compiled = math.compile(exprInput);
+        const func = (x) => compiled.evaluate({x});
+
+        let x_vals = [];
+        let y_vals = [];
+
+        for (let i = -10; i <= 10; i += 0.05) {
+            try {
+                let y;
+                if (choice === 'original') {
+                    y = func(i);
+                } else if (choice === 'derivative') {
+                    const derivativeCompiled = math.compile(expr);
+                    y = derivativeCompiled.evaluate({x: i});
+                } else if (choice === 'integral') {
+                    y = numericalIntegral(exprInput, 0, i);
+                }
+                if (isFinite(y)) {
+                    x_vals.push(i);
+                    y_vals.push(y);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        const trace = {
+            x: x_vals,
+            y: y_vals,
+            mode: 'lines',
+            name: label,
+            line: {color: 'teal'}
+        };
+
+        const layout = {
+            title: label,
+            xaxis: {title: 'x'},
+            yaxis: {title: 'y'},
+            grid: {visible: true}
+        };
+
+        Plotly.newPlot('plot', [trace], layout);
+
+    } catch (err) {
+        alert('Invalid expression! Please try again.');
+        console.error(err);
+    }
+}
+
+// Helper for numeric integration (simple trapezoidal rule)
+function numericalIntegral(exprInput, a, b) {
+    const compiled = math.compile(exprInput);
+    let n = 100;
+    let h = (b - a) / n;
+    let sum = 0.5 * (compiled.evaluate({x: a}) + compiled.evaluate({x: b}));
+    for (let i = 1; i < n; i++) {
+        sum += compiled.evaluate({x: a + i * h});
+    }
+    return sum * h;
+}
+</script>
+
+</body>
+</html>
