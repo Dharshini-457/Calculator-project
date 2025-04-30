@@ -1,10 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>YouTube Video Background</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Calculator</title>
+    <div class="video-background">
+        <video autoplay muted loop>
+            <source src="https://youtu.be/IoSVxLr9K2o?si=HjAOGRqZ5BAvS1G7" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <body style="background-image: url('https://thumbs.dreamstime.com/z/flat-lay-top-view-office-table-desk-calendar-calculators-pens-other-supplies-as-background-workspace-comfortable-work-150133302.jpg'); background-size: cover; background-repeat: no-repeat; background-position: center; height: 100vh;">
+
+    
     <style>
-        body, html {
+        body {
+        background-image: url("calculator.png"); /* Path to your image */
+        background-size: cover; /* Makes the image cover the entire area */
+        background-repeat: no-repeat; /* Prevents repeating */
+        background-position: center center; /* Centers the image */
+        height: 100vh; /* Full viewport height */
+        margin: 0;
+        }
+    </style>
+    </head>
+
+
+
+  
+    
+    <style type="text/css">
+            body, html {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -17,18 +44,26 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: -1;
-            pointer-events: none; /* Let clicks pass through */
+            z-index: -1; /* Ensure video stays behind content */
         }
 
-        .video-background iframe {
+        .video-background video {
             width: 100%;
             height: 100%;
-            pointer-events: none;
-            border: none;
+            object-fit: cover; /* Ensures the video covers the screen without distortion */
         }
 
         .content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: white;
+            padding: 20px;
+        }
+
+
+        .content {
+            text-align: center;
             position: relative;
             z-index: 1;
             display: flex;
@@ -36,13 +71,13 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            color: white;
+            color: rgb(24, 21, 24);
             text-shadow: 0 0 10px black;
         }
 
         nav a {
             margin: 10px;
-            color: white;
+            color: rgb(72, 172, 211);
             text-decoration: none;
             font-size: 24px;
             font-weight: bold;
@@ -51,20 +86,53 @@
 </head>
 
 <body>
-    <div class="video-background">
-        <iframe src="https://www.youtube.com/embed/IoSVxLr9K2o?autoplay=1&mute=1&loop=1&playlist=IoSVxLr9K2o&controls=0&showinfo=0&modestbranding=1&rel=0"
-            frameborder="0"
-            allow="autoplay; fullscreen"
-            allowfullscreen>
-        </iframe>
-    </div>
+    
 
     <div class="content">
-        <h1>Welcome</h1>
+        <h1>Welcome!🧮
+        </h1>
         <nav>
-            <a href="/ncalc">NORMAL CALCULATOR</a>
-            <a href="/calc">CALCULUS CALCULATOR</a>
+            <a class="btn" href="/ncalc">NORMAL CALCULATOR</a>
+            <a class="btn" href="/calc">CALCULUS CALCULATOR</a>
         </nav>
     </div>
+    
+    <style>
+        .content {
+            text-align: center;
+            margin-top: 100px;
+        }
+    
+        nav {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+    
+        .btn {
+            display: inline-block;
+            background-color: #beb6c2;
+            color: rgb(29, 26, 26);
+            padding: 15px 30px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.2s;
+        }
+    
+        .btn:hover {
+            background-color: #849b85;
+            transform: scale(1.05);
+        }
+    
+        .btn:active {
+            transform: scale(0.98);
+        }
+    </style>
+    
 </body>
 </html>
