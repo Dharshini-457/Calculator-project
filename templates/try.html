@@ -6,143 +6,267 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 30px; }
-        input, select, button, textarea { margin: 10px 0; padding: 8px; width: 100%; }
-        #plot { width: 100%; height: 500px; margin-top: 20px; }
-        #result { margin-top: 20px; font-size: 18px; color: #333; }
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url("calculator.png");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: rgba(74, 22, 28, 0.9);
+            max-width: 700px;
+            width: 100%;
+            padding: 30px;
+            margin: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+        }
+
+        input, select, button, textarea {
+            margin: 10px 0;
+            padding: 8px;
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #plot {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        label {
+            color: white;
+            font-weight: bold;
+        }
+
+        #symbolicOutput {
+            color: white;
+            font-size: 18px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #orderContainer,
+        #integralLimits {
+            display: none;
+        }
     </style>
 </head>
 <body>
+<div class="container">
+    <h1>Function Plotter 📈</h1>
 
-<h1>Function Plotter 📈</h1>
+    <label for="functionInput">Enter a function of x:</label>
+    <textarea id="functionInput" rows="3" placeholder="Example: sin(x) + x^2"></textarea>
 
-<label for="functionInput">Enter a function of x:</label>
-<textarea id="functionInput" rows="3" placeholder="Example: sin(x) + x^2"></textarea>
+    <label for="choice">What do you want to plot?</label>
+    <select id="choice">
+        <option value="original">Original Function</option>
+        <option value="derivative">Derivative</option>
+        <option value="integral">Integral</option>
+    </select>
 
-<label for="choice">Choose what to plot:</label>
-<select id="choice">
-    <option value="original">Original Function</option>
-    <option value="derivative">Derivative</option>
-    <option value="integral">Integral</option>
-</select>
+    <div id="orderContainer">
+        <label for="orderInput">Order (for derivatives):</label>
+        <input type="number" id="orderInput" value="1" min="1" />
+    </div>
 
-<div id="bounds" style="display: none;">
-    <label for="lowerBound">Lower bound (a):</label>
-    <input type="number" id="lowerBound" value="0">
+    <div id="integralLimits">
+        <label for="lowerLimit">Lower Limit (a):</label>
+        <input type="number" id="lowerLimit" value="0" />
+        <label for="upperLimit">Upper Limit (b):</label>
+        <input type="number" id="upperLimit" value="10" />
+    </div>
 
-    <label for="upperBound">Upper bound (b):</label>
-    <input type="number" id="upperBound" value="10">
+    <button onclick="plotFunction()">Plot</button>
+
+    <div id="plot"></div>
+    <div id="symbolicOutput"></div>
 </div>
 
-<button onclick="plotFunction()">Plot</button>
-
-<div id="plot"></div>
-<div id="result"></div>
-
 <script>
-// Show bounds input only when "Integral" is selected
-document.getElementById('choice').addEventListener('change', function () {
-    const boundsDiv = document.getElementById('bounds');
-    boundsDiv.style.display = (this.value === 'integral') ? 'block' : 'none';
-});
+    document.getElementById('choice').addEventListener('change', function () {
+        const orderContainer = document.getElementById('orderContainer');
+        const integralLimits = document.getElementById('integralLimits');
 
-function plotFunction() {
-    const exprInput = document.getElementById('functionInput').value.trim();
-    const choice = document.getElementById('choice').value;
-    const lowerBound = parseFloat(document.getElementById('lowerBound').value);
-    const upperBound = parseFloat(document.getElementById('upperBound').value);
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = '';  // Clear previous result
+        if (this.value === 'derivative') {
+            orderContainer.style.display = 'block';
+            integralLimits.style.display = 'none';
+        } else if (this.value === 'integral') {
+            orderContainer.style.display = 'none';
+            integralLimits.style.display = 'block';
+        } else {
+            orderContainer.style.display = 'none';
+            integralLimits.style.display = 'none';
+        }
+    });
 
-    if (!exprInput) {
-        alert('Please enter a function!');
-        return;
-    }
+    function plotFunction() {
+        const exprInput = document.getElementById('functionInput').value;
+        const choice = document.getElementById('choice').value;
+        const orderInput = document.getElementById('orderInput');
+        const order = choice === 'derivative' ? (parseInt(orderInput.value) || 1) : 1;
+        const lower = parseFloat(document.getElementById('lowerLimit').value) || 0;
+        const upper = parseFloat(document.getElementById('upperLimit').value) || 10;
+        const symbolicOutput = document.getElementById('symbolicOutput');
 
-    try {
+        symbolicOutput.innerText = '';
+
+        if (!exprInput) {
+            alert('Please enter a function!');
+            return;
+        }
+
         let expr = exprInput;
         let label = `f(x) = ${exprInput}`;
 
-        if (choice === 'derivative') {
-            expr = math.derivative(exprInput, 'x').toString();
-            label = `f'(x) = ${expr}`;
-        } else if (choice === 'integral') {
-            expr = math.integral(exprInput, 'x').toString(); // << symbolic integral
-            label = `∫f(x)dx = ${expr}`;
-        }
-
-
-        const compiled = math.compile(exprInput);
-
-        // Prepare x and y values
-        const x_vals = [];
-        const y_vals = [];
-
-        for (let x = -10; x <= 10; x += 0.05) {
-            try {
-                let y;
-                if (choice === 'original') {
-                    y = compiled.evaluate({x});
-                } else if (choice === 'derivative') {
-                    const derivativeCompiled = math.compile(expr);
-                    y = derivativeCompiled.evaluate({x});
-                } else if (choice === 'integral') {
-                    y = numericalIntegral(exprInput, 0, x); // integral from 0 to x
+        try {
+            if (choice === 'derivative') {
+                for (let i = 0; i < order; i++) {
+                    expr = math.derivative(expr, 'x').toString();
                 }
-
-                if (isFinite(y)) {
-                    x_vals.push(x);
-                    y_vals.push(y);
-                }
-            } catch (e) {
-                console.error(e);
+                label = `f<sup>(${order})</sup>(x) = ${expr}`;
+            } else if (choice === 'integral') {
+                symbolicOutput.innerText = `Numerical integration from a = ${lower} to b = ${upper}`;
+                label = `∫f(x)dx (from ${lower} to ${upper})`;
             }
+
+            const compiled = math.compile(expr);
+            const x_vals = [];
+            const y_vals = [];
+
+            for (let i = -10; i <= 10; i += 0.05) {
+                try {
+                    let y;
+                    if (choice === 'original' || choice === 'derivative') {
+                        y = compiled.evaluate({x: i});
+                    } else if (choice === 'integral') {
+                        y = repeatedNumericalIntegral(exprInput, lower, i, 1);
+                    }
+
+                    if (isFinite(y)) {
+                        x_vals.push(i);
+                        y_vals.push(y);
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            const trace = {
+                x: x_vals,
+                y: y_vals,
+                mode: 'lines',
+                name: label,
+                line: {color: 'teal'}
+            };
+
+            const layout = {
+                title: label,
+                xaxis: {title: 'x'},
+                yaxis: {title: 'y'}
+            };
+
+            Plotly.newPlot('plot', [trace], layout);
+
+        } catch (err) {
+            alert('Invalid expression! Please try again.');
+            console.error(err);
+        }
+    }
+
+    function numericalIntegral(exprInput, a, b) {
+        const compiled = math.compile(exprInput);
+        let n = 100;
+        let h = (b - a) / n;
+        let sum = 0.5 * (compiled.evaluate({x: a}) + compiled.evaluate({x: b}));
+        for (let i = 1; i < n; i++) {
+            sum += compiled.evaluate({x: a + i * h});
+        }
+        return sum * h;
+    }
+
+    function repeatedNumericalIntegral(expr, a, b, times) {
+        if (times <= 1) return numericalIntegral(expr, a, b);
+
+        const dx = 0.1;
+        const compiled = math.compile(expr);
+        let innerFunc = (x) => compiled.evaluate({x});
+
+        for (let t = 1; t < times; t++) {
+            const prevFunc = innerFunc;
+            innerFunc = (x) => numericalIntegralFromFunc(prevFunc, a, x, dx);
         }
 
-        // Plot the function
-        Plotly.newPlot('plot', [{
-            x: x_vals,
-            y: y_vals,
-            mode: 'lines',
-            name: label,
-            line: {color: 'teal'}
-        }], {
-            title: label,
-            xaxis: {title: 'x'},
-            yaxis: {title: 'y'},
-            grid: {visible: true}
-        });
+        return innerFunc(b);
+    }
 
-        // Show definite integral if selected
-        if (choice === 'integral') {
-            const totalIntegral = numericalIntegral(exprInput, lowerBound, upperBound);
-            resultDiv.innerHTML = `
-                <strong>Definite Integral:</strong><br>
-                ∫ from ${lowerBound} to ${upperBound} ≈ <b>${totalIntegral.toFixed(6)}</b>
-            `;
+    function numericalIntegralFromFunc(func, a, b, h = 0.1) {
+        let n = Math.floor((b - a) / h);
+        let sum = 0.5 * (func(a) + func(b));
+        for (let i = 1; i < n; i++) {
+            sum += func(a + i * h);
         }
-
-    } catch (err) {
-        alert('Invalid expression! Please try again.');
-        console.error(err);
+        return sum * h;
     }
-}
-
-// Simple trapezoidal rule for numeric integration
-function numericalIntegral(exprInput, a, b) {
-    const compiled = math.compile(exprInput);
-    const n = 500; // more points = better accuracy
-    const h = (b - a) / n;
-    let sum = 0.5 * (compiled.evaluate({x: a}) + compiled.evaluate({x: b}));
-
-    for (let i = 1; i < n; i++) {
-        const xi = a + i * h;
-        sum += compiled.evaluate({x: xi});
-    }
-
-    return sum * h;
-}
 </script>
+
+<!-- Exit Button -->
+<div class="content">
+    <nav>
+        <a class="btn" href="/">EXIT</a>
+    </nav>
+</div>
+
+<style>
+    .content {
+        margin-top: 40px;
+        text-align: center;
+        width: 100%;
+    }
+
+    nav {
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn {
+        display: inline-block;
+        background-color: #9cac9c;
+        color: rgb(20, 17, 17);
+        padding: 15px 30px;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: bold;
+        border-radius: 12px;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25);
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .btn:hover {
+        background-color: #29442e;
+        transform: scale(1.05);
+    }
+
+    .btn:active {
+        transform: scale(0.97);
+    }
+</style>
 
 </body>
 </html>
